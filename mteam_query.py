@@ -475,6 +475,8 @@ class InteractiveMenu:
         self.default_category: Optional[int] = None
         self.default_sort = "seeders"
         self.default_limit = 20
+        # 搜索模式状态: adult=成人模式, normal=正常模式
+        self.current_search_mode = "adult"  # 默认成人模式
 
     def show_welcome(self) -> None:
         """显示欢迎界面"""
@@ -554,11 +556,12 @@ class InteractiveMenu:
             return
 
         # 直接使用默认设置搜索
+        mode_display = "成人模式🔞" if self.current_search_mode == "adult" else "正常模式✨"
         print(f"\n正在搜索: {keyword}...")
-        print(f"使用默认设置: 分类={self.default_category or '全部'}, 排序={self.default_sort}, 数量={self.default_limit}")
+        print(f"使用默认设置: 分类={self.default_category or '全部'}, 模式={mode_display}, 排序={self.default_sort}, 数量={self.default_limit}")
 
-        # 判断是否使用成人模式（全部或成人分类时使用）
-        mode = "adult" if self.default_category is None or self.default_category == 429 else None
+        # 根据当前搜索模式决定是否使用成人模式
+        mode = "adult" if self.current_search_mode == "adult" else None
 
         torrents = self.client.search(
             keyword=keyword,
@@ -797,12 +800,18 @@ class InteractiveMenu:
         """运行交互式主循环 (直接进入搜索模式)"""
         self.show_welcome()
 
+        # 显示当前搜索模式
+        mode_display = "成人模式🔞" if self.current_search_mode == "adult" else "正常模式✨"
+        print(f"📌 当前搜索模式: {mode_display}")
+
         # 显示快捷操作提示
         print("\n💡 提示:")
         print("  - 直接输入关键词开始搜索")
+        print("  - 输入 '/成人' 或 '/正常' 切换搜索模式")
         print("  - 输入 'menu' 打开主菜单")
         print("  - 输入 'browse' 按分类浏览")
         print("  - 输入 'settings' 修改默认设置")
+        print("  - 输入 'help' 查看完整帮助")
         print("  - 输入 'exit' 或 'quit' 退出程序\n")
 
         # 直接进入搜索模式
@@ -833,15 +842,24 @@ class InteractiveMenu:
             elif keyword.lower() == 'help':
                 self.show_help()
                 continue
+            elif keyword == '/成人' or keyword.lower() == '/adult':
+                self.current_search_mode = "adult"
+                print("\n✅ 已切换到【成人模式】🔞\n")
+                continue
+            elif keyword == '/正常' or keyword.lower() == '/normal':
+                self.current_search_mode = "normal"
+                print("\n✅ 已切换到【正常模式】✨\n")
+                continue
             elif not keyword:
                 continue
 
             # 执行搜索
             print(f"\n正在搜索: {keyword}...")
-            print(f"使用默认设置: 分类={self.default_category or '全部'}, 排序={self.default_sort}, 数量={self.default_limit}")
+            mode_display = "成人模式🔞" if self.current_search_mode == "adult" else "正常模式✨"
+            print(f"使用设置: 分类={self.default_category or '全部'}, 模式={mode_display}, 排序={self.default_sort}, 数量={self.default_limit}")
 
-            # 判断是否使用成人模式（全部或成人分类时使用）
-            mode = "adult" if self.default_category is None or self.default_category == 429 else None
+            # 根据当前搜索模式决定是否使用成人模式
+            mode = "adult" if self.current_search_mode == "adult" else None
 
             torrents = self.client.search(
                 keyword=keyword,
@@ -896,6 +914,8 @@ class InteractiveMenu:
         print("=" * 60)
         print("🔍 搜索命令:")
         print("  直接输入关键词 - 开始搜索")
+        print("  /成人         - 切换到成人搜索模式🔞")
+        print("  /正常         - 切换到正常搜索模式✨")
         print("  help         - 显示此帮助")
         print("  menu         - 打开主菜单")
         print("  browse       - 按分类浏览")
@@ -905,6 +925,11 @@ class InteractiveMenu:
         print("  - 输入关键词后直接显示结果")
         print("  - 使用默认设置进行搜索")
         print("  - 可以在 settings 中修改默认值")
+        print("  - 默认为成人模式，使用 /正常 可切换")
+
+        # 显示当前模式
+        mode_display = "成人模式🔞" if self.current_search_mode == "adult" else "正常模式✨"
+        print(f"\n📌 当前搜索模式: {mode_display}")
         print("=" * 60 + "\n")
 
 
