@@ -173,6 +173,7 @@ class MTeamQueryClient:
         self,
         keyword: str,
         category: Optional[int] = None,
+        mode: Optional[str] = None,
         sort_field: str = "seeders",
         sort_dir: str = "desc",
         limit: int = 20
@@ -183,6 +184,7 @@ class MTeamQueryClient:
         Args:
             keyword: 搜索关键词
             category: 分类 ID (可选)
+            mode: 搜索模式 (None=普通模式, "adult"=成人模式)
             sort_field: 排序字段 (seeders, size, time)
             sort_dir: 排序方向 (asc, desc)
             limit: 返回结果数量限制
@@ -190,10 +192,20 @@ class MTeamQueryClient:
         Returns:
             种子列表
         """
-        payload = {"keyword": keyword, "visible": 1}
-
-        if category:
-            payload["category"] = category
+        # 成人模式使用不同的 payload 结构
+        if mode == "adult":
+            payload = {
+                "mode": "adult",
+                "keyword": keyword,
+                "categories": [],
+                "pageNumber": 1,
+                "pageSize": limit
+            }
+        else:
+            # 普通模式
+            payload = {"keyword": keyword, "visible": 1}
+            if category:
+                payload["category"] = category
 
         try:
             response = self.session.post(
@@ -545,9 +557,13 @@ class InteractiveMenu:
         print(f"\n正在搜索: {keyword}...")
         print(f"使用默认设置: 分类={self.default_category or '全部'}, 排序={self.default_sort}, 数量={self.default_limit}")
 
+        # 判断是否使用成人模式（全部或成人分类时使用）
+        mode = "adult" if self.default_category is None or self.default_category == 429 else None
+
         torrents = self.client.search(
             keyword=keyword,
             category=self.default_category,
+            mode=mode,
             sort_field=self.default_sort,
             limit=self.default_limit
         )
@@ -577,10 +593,14 @@ class InteractiveMenu:
         category_name, _ = CATEGORY_MAP[category_id]
         print(f"\n正在浏览分类: {category_name}")
 
+        # 判断是否使用成人模式
+        mode = "adult" if int(category_id) == 429 else None
+
         # 使用默认设置浏览该分类
         torrents = self.client.search(
             keyword="",
             category=int(category_id),
+            mode=mode,
             sort_field=self.default_sort,
             limit=self.default_limit
         )
@@ -820,9 +840,13 @@ class InteractiveMenu:
             print(f"\n正在搜索: {keyword}...")
             print(f"使用默认设置: 分类={self.default_category or '全部'}, 排序={self.default_sort}, 数量={self.default_limit}")
 
+            # 判断是否使用成人模式（全部或成人分类时使用）
+            mode = "adult" if self.default_category is None or self.default_category == 429 else None
+
             torrents = self.client.search(
                 keyword=keyword,
                 category=self.default_category,
+                mode=mode,
                 sort_field=self.default_sort,
                 limit=self.default_limit
             )
