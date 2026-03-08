@@ -1,0 +1,7 @@
+# M-Team 种子查询工具依赖
+
+# HTTP 请求库
+requests>=2.31.0
+
+# YAML 配置文件解析
+PyYAML>=6.0.1
