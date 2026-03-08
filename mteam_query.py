@@ -29,15 +29,22 @@ if sys.platform == 'win32':
 
 # M-Team 分类映射 (开闭原则 - 易扩展)
 CATEGORY_MAP = {
+    # 电影类
     "401": ("SD电影", "movie"),
     "419": ("HD电影", "movie"),
     "420": ("原盘/UHD", "movie"),
     "404": ("纪录片", "movie"),
+    # 剧集类
     "402": ("剧集", "tv"),
     "438": ("剧集包", "tv"),
+    # 动漫
     "405": ("动漫", "anime"),
+    # 综艺
     "403": ("综艺", "variety"),
+    # 体育
     "418": ("体育", "sports"),
+    # 成人内容
+    "429": ("成人", "adult"),
 }
 
 
@@ -381,7 +388,14 @@ class TorrentPrinter:
         print("=" * 150)
 
         for idx, torrent in enumerate(torrents, start=1):
-            title = torrent.get('name', '未知标题')[:42]
+            # 优先使用 smallDescr（中文标题），回退到 name
+            small_descr = torrent.get('smallDescr', '')
+            if small_descr:
+                # 提取 smallDescr 中第一个 | 之前的内容（通常是中文标题）
+                title = small_descr.split('|')[0].strip()[:42]
+            else:
+                title = torrent.get('name', '未知标题')[:42]
+
             size = format_size(torrent.get('size', 0))
             seeders = get_seeders(torrent)
             leechers = torrent.get('status', {}).get('leechers', 0) if isinstance(torrent.get('status'), dict) else 0
@@ -413,7 +427,12 @@ class TorrentPrinter:
         print("\n" + "═" * 60)
         print(f"📦 种子详情")
         print("═" * 60)
-        print(f"标题: {torrent.get('name', '未知')}")
+
+        # 优先显示中文标题
+        small_descr = torrent.get('smallDescr', '')
+        if small_descr:
+            print(f"标题: {small_descr}")
+        print(f"文件名: {torrent.get('name', '未知')}")
         print(f"大小: {format_size(torrent.get('size', 0))}")
         print(f"分类: {torrent.get('category', '未知')}")
         print(f"ID: {torrent.get('id', '未知')}")
@@ -482,6 +501,7 @@ class InteractiveMenu:
             "动漫 🎌": ["405"],
             "综艺 🎭": ["403"],
             "体育 ⚽": ["418"],
+            "成人 🔞": ["429"],  # 新增成人分类
         }
 
         for group, cats in categories.items():
@@ -579,12 +599,15 @@ class InteractiveMenu:
             print("  2. 🔗 获取下载链接")
             print("  3. 📄 查看种子详情")
             print("  4. 🔍 重新搜索")
-            print("  0. 🔙 返回主菜单")
+            print("  5. 📂 按分类浏览")
+            print("  6. ⚙️  默认设置")
+            print("  0. 🚪 退出程序")
 
             choice = self.get_user_choice("请选择操作: ")
 
             if choice == "0":
-                break
+                print("\n👋 感谢使用,再见喵～ ฅ'ω'ฅ\n")
+                sys.exit(0)
             elif choice == "1":
                 self.download_torrent()
             elif choice == "2":
@@ -592,7 +615,13 @@ class InteractiveMenu:
             elif choice == "3":
                 self.view_detail()
             elif choice == "4":
-                break
+                self.search_mode()
+                return
+            elif choice == "5":
+                self.browse_mode()
+                return
+            elif choice == "6":
+                self.settings_mode()
             else:
                 print("❌ 无效的选择")
 
@@ -745,24 +774,114 @@ class InteractiveMenu:
             print("❌ 请输入有效的数字")
 
     def run(self) -> None:
-        """运行交互式主循环"""
+        """运行交互式主循环 (直接进入搜索模式)"""
         self.show_welcome()
 
+        # 显示快捷操作提示
+        print("\n💡 提示:")
+        print("  - 直接输入关键词开始搜索")
+        print("  - 输入 'menu' 打开主菜单")
+        print("  - 输入 'browse' 按分类浏览")
+        print("  - 输入 'settings' 修改默认设置")
+        print("  - 输入 'exit' 或 'quit' 退出程序\n")
+
+        # 直接进入搜索模式
+        self.quick_search_mode()
+
+    def quick_search_mode(self) -> None:
+        """快速搜索模式 (启动时的默认模式)"""
         while True:
-            self.show_main_menu()
+            print("\n" + "🔍" * 30)
+            print("请输入搜索关键词 (或输入 help 查看命令)")
+            print("🔍" * 30)
+
+            keyword = self.get_user_choice("\n🔎 搜索: ")
+
+            # 处理快捷命令
+            if keyword.lower() in ['exit', 'quit', '0', 'q']:
+                print("\n👋 感谢使用,再见喵～ ฅ'ω'ฅ\n")
+                break
+            elif keyword.lower() == 'menu':
+                self.main_menu_mode()
+                continue
+            elif keyword.lower() == 'browse':
+                self.browse_mode()
+                continue
+            elif keyword.lower() == 'settings':
+                self.settings_mode()
+                continue
+            elif keyword.lower() == 'help':
+                self.show_help()
+                continue
+            elif not keyword:
+                continue
+
+            # 执行搜索
+            print(f"\n正在搜索: {keyword}...")
+            print(f"使用默认设置: 分类={self.default_category or '全部'}, 排序={self.default_sort}, 数量={self.default_limit}")
+
+            torrents = self.client.search(
+                keyword=keyword,
+                category=self.default_category,
+                sort_field=self.default_sort,
+                limit=self.default_limit
+            )
+
+            self.current_torrents = torrents
+            TorrentPrinter.print_table(torrents)
+
+            if torrents:
+                self.handle_torrent_selection()
+
+    def main_menu_mode(self) -> None:
+        """传统主菜单模式"""
+        while True:
+            print("\n" + "=" * 60)
+            print("📋 主菜单")
+            print("=" * 60)
+            print("  1. 🔍 搜索种子")
+            print("  2. 📂 按分类浏览")
+            print("  3. ⚙️  默认设置")
+            print("  0. 🚪 退出")
+            print("=" * 60)
+
+            # 显示当前默认设置
+            cat_str = "全部" if self.default_category is None else self.default_category
+            print(f"\n📌 当前默认: 分类={cat_str}, 排序={self.default_sort}, 数量={self.default_limit}")
+
             choice = self.get_user_choice("\n请选择功能 (0-3): ")
 
             if choice == "0":
                 print("\n👋 感谢使用,再见喵～ ฅ'ω'ฅ\n")
-                break
+                sys.exit(0)
             elif choice == "1":
                 self.search_mode()
+                break
             elif choice == "2":
                 self.browse_mode()
+                break
             elif choice == "3":
                 self.settings_mode()
             else:
                 print("\n❌ 无效的选择,请重新输入")
+
+    def show_help(self) -> None:
+        """显示帮助信息"""
+        print("\n" + "=" * 60)
+        print("📖 帮助信息")
+        print("=" * 60)
+        print("🔍 搜索命令:")
+        print("  直接输入关键词 - 开始搜索")
+        print("  help         - 显示此帮助")
+        print("  menu         - 打开主菜单")
+        print("  browse       - 按分类浏览")
+        print("  settings     - 修改默认设置")
+        print("  exit/quit    - 退出程序")
+        print("\n💡 搜索技巧:")
+        print("  - 输入关键词后直接显示结果")
+        print("  - 使用默认设置进行搜索")
+        print("  - 可以在 settings 中修改默认值")
+        print("=" * 60 + "\n")
 
 
 # ==================== 命令行界面 ====================
