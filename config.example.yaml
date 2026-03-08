@@ -12,10 +12,16 @@ proxies:
   http: "http://127.0.0.1:7890"
   https: "http://127.0.0.1:7890"
 
+# Telegram Bot Token (可选)
+# 用于发送通知到 Telegram
+# 获取方式: 与 @BotFather 对话创建 Bot 获取 Token
+# 留空或删除此行则不使用 Telegram 通知功能
+telegram_token: ""
+
 # 请求超时时间 (秒)
 timeout: 15
 
 # 注意事项:
 # 1. 默认代理端口: Clash=7890, v2ray=10809, 根据你的实际软件修改
 # 2. 如果使用系统级代理,可以将 proxies 设置为 null 或删除此配置
-# 3. 请妥善保管 API Key,不要将 config.yaml 提交到版本控制系统
+# 3. 请妥善保管 API Key 和 Telegram Token,不要将 config.yaml 提交到版本控制系统
