@@ -625,8 +625,9 @@ class InteractiveMenu:
             print("  5. 📂 按分类浏览")
             print("  6. ⚙️  默认设置")
             print("  0. 🚪 退出程序")
+            print("\n💡 提示: 也可以直接输入关键词继续搜索")
 
-            choice = self.get_user_choice("请选择操作: ")
+            choice = self.get_user_choice("请选择操作或输入关键词: ")
 
             if choice == "0":
                 print("\n👋 感谢使用,再见喵～ ฅ'ω'ฅ\n")
@@ -645,8 +646,41 @@ class InteractiveMenu:
                 return
             elif choice == "6":
                 self.settings_mode()
+            elif choice == '/成人' or choice.lower() == '/adult':
+                self.current_search_mode = "adult"
+                print("\n✅ 已切换到【成人模式】🔞\n")
+                continue
+            elif choice == '/正常' or choice.lower() == '/normal':
+                self.current_search_mode = "normal"
+                print("\n✅ 已切换到【正常模式】✨\n")
+                continue
+            elif not choice:
+                # 空输入，跳过
+                continue
             else:
-                print("❌ 无效的选择")
+                # 当作搜索关键词处理
+                keyword = choice
+                print(f"\n正在搜索: {keyword}...")
+                mode_display = "成人模式🔞" if self.current_search_mode == "adult" else "正常模式✨"
+                print(f"使用设置: 分类={self.default_category or '全部'}, 模式={mode_display}, 排序={self.default_sort}, 数量={self.default_limit}")
+
+                # 根据当前搜索模式决定是否使用成人模式
+                mode = "adult" if self.current_search_mode == "adult" else None
+
+                torrents = self.client.search(
+                    keyword=keyword,
+                    category=self.default_category,
+                    mode=mode,
+                    sort_field=self.default_sort,
+                    limit=self.default_limit
+                )
+
+                self.current_torrents = torrents
+                TorrentPrinter.print_table(torrents)
+
+                # 如果没有搜索到结果，继续循环
+                if not torrents:
+                    continue
 
     def download_torrent(self) -> None:
         """下载种子文件"""
