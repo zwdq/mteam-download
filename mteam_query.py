@@ -618,13 +618,8 @@ class InteractiveMenu:
         """处理种子选择和操作"""
         while True:
             print("\n操作选项:")
-            print("  1. 📥 下载种子文件")
-            print("  2. 🔗 获取下载链接")
-            print("  3. 📄 查看种子详情")
-            print("  4. 🔍 重新搜索")
-            print("  5. 📂 按分类浏览")
-            print("  6. ⚙️  默认设置")
-            print("  0. 🚪 退出程序")
+            print("  1. 📥 下载种子  |  2. 🔗 获取链接  |  3. 📄 查看详情  |  4. 🔍 重新搜索")
+            print("  5. 📂 分类浏览  |  6. ⚙️ 默认设置  |  0. 🚪 退出程序")
             print("\n💡 提示: 也可以直接输入关键词继续搜索")
 
             choice = self.get_user_choice("请选择操作或输入关键词: ")
