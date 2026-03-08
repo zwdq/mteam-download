@@ -1,0 +1,9 @@
+# M-Team 种子查询工具 - 打包依赖
+# 安装命令: pip install -r build-requirements.txt
+
+# PyInstaller - 打包工具
+pyinstaller>=6.0.0
+
+# 运行时依赖
+requests>=2.31.0
+PyYAML>=6.0.1

@@ -86,44 +86,22 @@ class Config:
         if not self.api_key:
             raise ValueError("API Key 未配置!请在 config.yaml 中设置 api_key")
 
-        # 如果配置文件中没有telegram_token，提示用户输入
+        # 打印配置状态
+        if self.proxies:
+            print(f"✅ 代理配置: {self.proxies.get('http', 'N/A')}")
+        else:
+            print("⚠️  未配置代理（如遇到502错误，建议配置代理）")
+
         if not self.telegram_token:
-            print("\n💡 提示: 未检测到 Telegram Token 配置")
-            print("如需使用 Telegram 通知功能，请输入 Token (直接回车跳过):")
-            try:
-                token = input("请输入 Telegram Bot Token: ").strip()
-                if token:
-                    self.telegram_token = token
-                    print("✅ Telegram Token 已设置")
-                    # 询问是否保存到配置文件
-                    save = input("是否保存到配置文件? (y/n): ").strip().lower()
-                    if save == 'y':
-                        self._save_token_to_config(token)
-            except (EOFError, KeyboardInterrupt):
-                print("\n跳过 Telegram Token 设置")
+            print("💡 提示: 未配置 Telegram Token，Telegram 通知功能将不可用")
+        else:
+            print("✅ Telegram Token 已配置")
 
     def get_headers(self) -> Dict[str, str]:
         """获取带有认证的请求头"""
         headers = self.DEFAULT_HEADERS.copy()
         headers['x-api-key'] = self.api_key
         return headers
-
-    def _save_token_to_config(self, token: str) -> None:
-        """保存 Telegram Token 到配置文件"""
-        try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                config_data = yaml.safe_load(f) or {}
-
-            # 添加telegram_token
-            config_data['telegram_token'] = token
-
-            # 写回文件
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                yaml.safe_dump(config_data, f, allow_unicode=True, default_flow_style=False)
-
-            print(f"✅ 已保存 Telegram Token 到 {self.config_path}")
-        except Exception as e:
-            print(f"⚠️ 保存失败: {e}")
 
 
 # ==================== 工具函数 ====================
