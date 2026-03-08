@@ -46,6 +46,11 @@ impl ConfigManager {
         let config: Config = serde_yaml::from_str(&content)
             .with_context(|| format!("配置文件格式错误: {}", path.display()))?;
 
+        // 打印配置信息
+        eprintln!("🔍 [DEBUG] 从 {} 加载配置", path.display());
+        eprintln!("🔍 [DEBUG] API Key: {}***", &config.api_key[..8]);
+        eprintln!("🔍 [DEBUG] 代理配置: {:?}", config.proxies);
+
         // 验证 API Key
         if config.api_key.is_empty() || config.api_key == "your_mteam_api_key_here" {
             return Err(anyhow::anyhow!(

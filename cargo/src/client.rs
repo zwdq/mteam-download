@@ -27,13 +27,22 @@ impl MTeamClient {
         let mut client_builder = Client::builder()
             .timeout(Duration::from_secs(timeout));
 
-        // 设置代理
+        // 设置代理（分别设置 HTTP 和 HTTPS）
         if let Some((http_proxy, https_proxy)) = proxies {
-            // 优先使用 HTTPS 代理
-            let proxy = reqwest::Proxy::all(&https_proxy)
-                .or_else(|_| reqwest::Proxy::all(&http_proxy))
-                .context("代理配置无效")?;
-            client_builder = client_builder.proxy(proxy);
+            eprintln!("🔍 [DEBUG] 配置代理:");
+            eprintln!("  HTTP:  {}", http_proxy);
+            eprintln!("  HTTPS: {}", https_proxy);
+
+            // reqwest 需要分别设置 HTTP 和 HTTPS 代理
+            let http_proxy = reqwest::Proxy::http(&http_proxy)
+                .context("HTTP 代理配置无效")?;
+            let https_proxy = reqwest::Proxy::https(&https_proxy)
+                .context("HTTPS 代理配置无效")?;
+
+            eprintln!("🔍 [DEBUG] 代理已配置");
+            client_builder = client_builder.proxy(http_proxy).proxy(https_proxy);
+        } else {
+            eprintln!("🔍 [DEBUG] 未使用代理");
         }
 
         let client = client_builder.build()?;
@@ -81,26 +90,31 @@ impl MTeamClient {
             payload
         };
 
+        let url = format!("{}/torrent/search", self.api_base);
+        eprintln!("🔍 [DEBUG] 请求 URL: {}", url);
+        eprintln!("🔍 [DEBUG] Payload: {}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+
         let response = self
             .client
-            .post(format!("{}/torrent/search", self.api_base))
+            .post(&url)
             .header("x-api-key", &self.api_key)
             .json(&payload)
             .send()
             .await
             .context("API 请求失败")?;
 
-        if !response.status().is_success() {
-            return Err(anyhow::anyhow!("API 返回错误: {}", response.status()));
+        let status = response.status();
+        let response_text = response.text().await.context("读取响应失败")?;
+
+        if !status.is_success() {
+            return Err(anyhow::anyhow!("API 返回错误状态码: {}, 响应: {}", status, response_text));
         }
 
-        let api_response: ApiResponse<Torrent> = response
-            .json()
-            .await
-            .context("解析响应失败")?;
+        let api_response: ApiResponse<Torrent> = serde_json::from_str(&response_text)
+            .with_context(|| format!("解析响应失败, 原始响应: {}", response_text))?;
 
         if api_response.code != "0" {
-            return Err(anyhow::anyhow!("API 错误: {}", api_response.message));
+            return Err(anyhow::anyhow!("API 返回错误: code={}, message={}", api_response.code, api_response.message));
         }
 
         let mut torrents = api_response.data.data_items;

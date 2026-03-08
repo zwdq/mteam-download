@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
     let config = match ConfigManager::load() {
         Ok(cfg) => cfg,
         Err(e) => {
-            eprintln!("❌ {}", e);
+            eprintln!("❌ 配置加载失败: {:#}", e);
             std::process::exit(1);
         }
     };
@@ -84,6 +84,15 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // 打印代理配置信息
+    if let Some((ref http, ref https)) = proxies {
+        eprintln!("🔍 [DEBUG] 使用代理:");
+        eprintln!("  HTTP:  {}", http);
+        eprintln!("  HTTPS: {}", https);
+    } else {
+        eprintln!("🔍 [DEBUG] 未配置代理");
+    }
+
     let client = match MTeamClient::new(
         config.api_key.clone(),
         "https://api.m-team.cc/api".to_string(),
@@ -93,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
     ) {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("❌ 创建客户端失败: {}", e);
+            eprintln!("❌ 创建客户端失败: {:#}", e);
             std::process::exit(1);
         }
     };
@@ -127,7 +136,7 @@ async fn main() -> anyhow::Result<()> {
                     printer.print_table(&torrents, client.base_url());
                 }
                 Err(e) => {
-                    eprintln!("❌ 搜索失败: {}", e);
+                    eprintln!("❌ 搜索失败: {:#}", e);
                     std::process::exit(1);
                 }
             }
@@ -139,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
                     printer.print_detail(&torrent);
                 }
                 Err(e) => {
-                    eprintln!("❌ 获取详情失败: {}", e);
+                    eprintln!("❌ 获取详情失败: {:#}", e);
                     std::process::exit(1);
                 }
             }
@@ -150,7 +159,7 @@ async fn main() -> anyhow::Result<()> {
                     println!("✅ 下载链接: {}", url);
                 }
                 Err(e) => {
-                    eprintln!("❌ 获取链接失败: {}", e);
+                    eprintln!("❌ 获取链接失败: {:#}", e);
                     std::process::exit(1);
                 }
             }
@@ -162,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
                     println!("✅ 下载完成: {}", file_path.display());
                 }
                 Err(e) => {
-                    eprintln!("❌ 下载失败: {}", e);
+                    eprintln!("❌ 下载失败: {:#}", e);
                     std::process::exit(1);
                 }
             }
@@ -171,7 +180,7 @@ async fn main() -> anyhow::Result<()> {
             // 默认：交互式模式
             let mut menu = menu::InteractiveMenu::new(client);
             if let Err(e) = menu.run_quick_search_mode().await {
-                eprintln!("❌ 运行失败: {}", e);
+                eprintln!("❌ 运行失败: {:#}", e);
                 std::process::exit(1);
             }
         }
