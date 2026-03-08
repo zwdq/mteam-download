@@ -1,0 +1,39 @@
+[package]
+name = "mteam-query"
+version = "2.0.0"
+edition = "2021"
+authors = ["幽浮喵 <floater@example.com>"]
+description = "M-Team 种子查询工具 - Rust 实现"
+license = "MIT"
+repository = "https://github.com/floater/mteam-query"
+
+[dependencies]
+# HTTP 客户端
+reqwest = { version = "0.11", features = ["json", "stream"] }
+tokio = { version = "1.35", features = ["full"] }
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# 命令行
+clap = { version = "4.4", features = ["derive"] }
+
+# 错误处理
+anyhow = "1.0"
+thiserror = "1.0"
+
+# 配置路径
+dirs = "5.0"
+
+# 交互式终端
+dialoguer = "0.11"
+console = "0.15"
+indicatif = "0.17"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

@@ -29,6 +29,11 @@ ENV/
 env/
 .venv
 
+# Rust
+cargo/target/
+**/target/
+Cargo.lock
+
 # IDE
 .vscode/
 .idea/
