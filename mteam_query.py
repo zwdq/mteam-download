@@ -70,18 +70,20 @@ class Config:
 
     def _load_config(self) -> None:
         """加载配置文件 (开闭原则 - 易扩展配置源)"""
-        if self.config_path.exists():
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                config_data = yaml.safe_load(f) or {}
-                self.api_key = config_data.get('api_key', '')
-                self.proxies = config_data.get('proxies')
-                self.timeout = config_data.get('timeout', 15)
-                self.telegram_token = config_data.get('telegram_token', '')
-        else:
-            raise FileNotFoundError(
-                f"配置文件 {self.config_path} 不存在!\n"
-                f"请复制 config.example.yaml 为 config.yaml 并填入你的 API Key"
-            )
+        # 如果配置文件不存在，自动生成默认模板
+        if not self.config_path.exists():
+            self._create_default_config()
+            # 生成配置文件后，提示用户填写
+            print(f"\n✅ 已生成默认配置文件: {self.config_path}")
+            print("⚠️  请先编辑 config.yaml 填入你的 API Key，然后重新运行程序")
+            raise ValueError("API Key 未配置!请在 config.yaml 中设置 api_key")
+
+        with open(self.config_path, 'r', encoding='utf-8') as f:
+            config_data = yaml.safe_load(f) or {}
+            self.api_key = config_data.get('api_key', '')
+            self.proxies = config_data.get('proxies')
+            self.timeout = config_data.get('timeout', 15)
+            self.telegram_token = config_data.get('telegram_token', '')
 
         if not self.api_key:
             raise ValueError("API Key 未配置!请在 config.yaml 中设置 api_key")
@@ -96,6 +98,24 @@ class Config:
             print("💡 提示: 未配置 Telegram Token，Telegram 通知功能将不可用")
         else:
             print("✅ Telegram Token 已配置")
+
+    def _create_default_config(self) -> None:
+        """创建默认配置文件"""
+        default_config = {
+            'api_key': 'your_mteam_api_key_here',
+            'proxies': {
+                'http': 'http://127.0.0.1:7890',
+                'https': 'http://127.0.0.1:7890'
+            },
+            'telegram_token': '',
+            'timeout': 15
+        }
+
+        # 写入配置文件
+        with open(self.config_path, 'w', encoding='utf-8') as f:
+            f.write("# M-Team API 配置文件\n")
+            f.write("# 请填写你的 API Key 后重新运行程序\n\n")
+            yaml.safe_dump(default_config, f, allow_unicode=True, default_flow_style=False)
 
     def get_headers(self) -> Dict[str, str]:
         """获取带有认证的请求头"""
