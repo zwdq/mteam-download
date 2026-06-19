@@ -34,6 +34,10 @@ cargo/target/
 **/target/
 Cargo.lock
 
+# Node / Vite
+node_modules/
+.vite/
+
 # IDE
 .vscode/
 .idea/
