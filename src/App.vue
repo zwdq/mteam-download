@@ -37,7 +37,7 @@ const downloadUrl = ref("");
 const loading = ref(false);
 const detailLoading = ref(false);
 const errorMessage = ref("");
-const statusMessage = ref("保留了原 Python/Rust 代码，当前页面使用 Vue + JS 重新实现主要流程。");
+const statusMessage = ref("填写 API Key 后即可搜索资源。");
 
 watch(
   settings,
@@ -118,11 +118,9 @@ async function createDownloadUrl(item) {
   <div class="page-shell">
     <aside class="settings-panel">
       <div>
-        <p class="eyebrow">M-Team Vue Client</p>
-        <h1>用前端重做查询流程</h1>
-        <p class="muted">
-          原有 <code>mteam_query.py</code>、<code>cargo/</code>、<code>config.yaml</code> 都还保留着。
-        </p>
+        <p class="eyebrow">M-Team Search</p>
+        <h1>M-Team 资源查询</h1>
+        <p class="muted">输入 API Key，按关键词、分类和排序方式查询资源。</p>
       </div>
 
       <label class="field">
@@ -131,22 +129,22 @@ async function createDownloadUrl(item) {
       </label>
 
       <label class="field">
-        <span>API Base</span>
+        <span>API 地址</span>
         <input v-model="settings.apiBase" type="text" />
       </label>
 
       <button class="secondary-button" type="button" @click="settings.apiBase = '/mteam-api'">
-        恢复代理地址
+        恢复默认地址
       </button>
 
       <label class="field">
-        <span>站点 Base</span>
+        <span>站点地址</span>
         <input v-model="settings.siteBase" type="text" />
       </label>
 
       <div class="tip-card">
         <strong>提示</strong>
-        <p>开发模式默认走 <code>/mteam-api</code> 本地代理，能减少浏览器 CORS 问题。生产环境仍建议单独配反向代理。</p>
+        <p>API Key 仅保存在当前浏览器中。若无法请求，请先恢复默认地址后重试。</p>
       </div>
     </aside>
 
