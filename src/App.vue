@@ -8,17 +8,17 @@ import { fetchTorrentDetail, generateDownloadUrl, searchTorrents } from "./lib/m
 const saved = loadSettings();
 
 const settings = reactive({
-  apiKey: *** || "",
+  apiKey: saved.apiKey || "",
   apiBase: saved.apiBase || (import.meta.env.DEV ? "/mteam-api" : "https://api.m-team.cc/api"),
   siteBase: saved.siteBase || "https://kp.m-team.cc"
 });
 
-if (
+if (import.meta.env.DEV && (
   settings.apiBase === "https://api.m-team.cc/api" ||
   settings.apiBase === "http://api.m-team.cc/api" ||
   settings.apiBase === "https://api.m-team.cc" ||
   settings.apiBase === "http://api.m-team.cc"
-) {
+)) {
   settings.apiBase = "/mteam-api";
 }
 
