@@ -9,7 +9,7 @@ const saved = loadSettings();
 
 const settings = reactive({
   apiKey: saved.apiKey || "",
-  apiBase: saved.apiBase || (import.meta.env.DEV ? "/mteam-api" : "https://api.m-team.cc/api"),
+  apiBase: saved.apiBase || (import.meta.env.DEV ? "/mteam-api" : "https://mteam-proxy.zhuwudaoqin.workers.dev/mteam-api"),
   siteBase: saved.siteBase || "https://kp.m-team.cc"
 });
 

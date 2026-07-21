@@ -24,8 +24,8 @@ function normalizeDetailPayload(payload) {
 function resolveApiBase(apiBase) {
   const value = String(apiBase || "").trim();
   if (!value) {
-    // 生产环境（GitHub Pages）默认直连 API，开发环境用 /mteam-api 代理
-    return import.meta.env.DEV ? "/mteam-api" : "https://api.m-team.cc/api";
+    // 生产环境（GitHub Pages）用 Cloudflare Worker 代理，开发环境用 Vite 代理
+    return import.meta.env.DEV ? "/mteam-api" : "https://mteam-proxy.zhuwudaoqin.workers.dev/mteam-api";
   }
 
   // 只在开发环境下把直连 URL 重写为代理路径
