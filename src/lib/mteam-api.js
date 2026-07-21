@@ -91,8 +91,8 @@ async function postForm(url, formData, apiKey) {
 /**
  * 搜索种子
  * 与 Python 版 search() 对齐：
- *   - 加分页参数 pageNumber / pageSize（让 API 返回足够数据）
- *   - 排序字段传给 API（sortField + sortOrder）
+ *   - 成人分类(429)使用 adult 模式 payload
+ *   - 普通模式加 pageNumber / pageSize / sortField / sortOrder
  *   - 返回数据直接取 data.data（与 Python 一致）
  */
 export async function searchTorrents(settings, filters) {
@@ -108,8 +108,30 @@ export async function searchTorrents(settings, filters) {
   const sortOrder = filters.sortDirection === "asc" ? "asc" : "desc";
 
   const limit = Number(filters.limit || 20);
+  const cat = filters.category ? Number(filters.category) : null;
 
-  // 与 Python 版一致的 payload，加上分页
+  // 成人分类(429)使用 adult 模式 payload（与 Python 版对齐）
+  if (cat === 429) {
+    const payload = {
+      mode: "adult",
+      keyword: filters.keyword,
+      categories: [],
+      pageNumber: 1,
+      pageSize: limit,
+    };
+    const data = await postJson(`${apiBase}/torrent/search`, payload, settings.apiKey);
+    const items = data?.data?.data || [];
+    // 前端排序（adult 模式 API 不支持排序参数）
+    items.sort((a, b) => {
+      const key = filters.sortField;
+      const av = key === "seeders" ? Number(a?.status?.seeders || a?.seeders || 0) : Number(a?.[key] || 0);
+      const bv = key === "seeders" ? Number(b?.status?.seeders || b?.seeders || 0) : Number(b?.[key] || 0);
+      return filters.sortDirection === "asc" ? av - bv : bv - av;
+    });
+    return items.slice(0, limit);
+  }
+
+  // 普通模式
   const payload = {
     keyword: filters.keyword,
     visible: 1,
@@ -120,8 +142,8 @@ export async function searchTorrents(settings, filters) {
   };
 
   // 有分类时加上 category
-  if (filters.category) {
-    payload.category = Number(filters.category);
+  if (cat) {
+    payload.category = cat;
   }
 
   const data = await postJson(`${apiBase}/torrent/search`, payload, settings.apiKey);
