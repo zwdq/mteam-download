@@ -8,8 +8,8 @@ import { fetchTorrentDetail, generateDownloadUrl, searchTorrents } from "./lib/m
 const saved = loadSettings();
 
 const settings = reactive({
-  apiKey: saved.apiKey || "",
-  apiBase: saved.apiBase || "/mteam-api",
+  apiKey: *** || "",
+  apiBase: saved.apiBase || (import.meta.env.DEV ? "/mteam-api" : "https://api.m-team.cc/api"),
   siteBase: saved.siteBase || "https://kp.m-team.cc"
 });
 

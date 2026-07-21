@@ -24,15 +24,17 @@ function normalizeDetailPayload(payload) {
 function resolveApiBase(apiBase) {
   const value = String(apiBase || "").trim();
   if (!value) {
-    return "/mteam-api";
+    // 生产环境（GitHub Pages）默认直连 API，开发环境用 /mteam-api 代理
+    return import.meta.env.DEV ? "/mteam-api" : "https://api.m-team.cc/api";
   }
 
-  if (
+  // 只在开发环境下把直连 URL 重写为代理路径
+  if (import.meta.env.DEV && (
     value === "https://api.m-team.cc/api" ||
     value === "http://api.m-team.cc/api" ||
     value === "https://api.m-team.cc" ||
     value === "http://api.m-team.cc"
-  ) {
+  )) {
     return "/mteam-api";
   }
 
