@@ -38,6 +38,8 @@ const loading = ref(false);
 const detailLoading = ref(false);
 const errorMessage = ref("");
 const statusMessage = ref("填写 API Key 后即可搜索资源。");
+const currentPage = ref(1);
+const totalCount = ref(0);
 
 watch(
   settings,
@@ -49,30 +51,45 @@ const canSearch = computed(() => Boolean(settings.apiKey.trim() && filters.keywo
 const selectedDetailUrl = computed(() =>
   selected.value ? detailUrl(settings.siteBase, selected.value.id) : ""
 );
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / Number(filters.limit || 20))));
+const hasPrev = computed(() => currentPage.value > 1);
+const hasNext = computed(() => currentPage.value < totalPages.value);
+
+async function doSearch(page) {
+  loading.value = true;
+  errorMessage.value = "";
+  currentPage.value = page;
+  statusMessage.value = `正在搜索第 ${page} 页...`;
+  detail.value = null;
+  selected.value = null;
+  downloadUrl.value = "";
+
+  try {
+    const result = await searchTorrents(settings, filters, page);
+    items.value = result.items;
+    totalCount.value = result.total;
+    statusMessage.value = `第 ${page}/${totalPages.value} 页，共 ${totalCount.value} 条结果，当前显示 ${items.value.length} 条。`;
+  } catch (error) {
+    items.value = [];
+    totalCount.value = 0;
+    errorMessage.value = error instanceof Error ? error.message : String(error);
+    statusMessage.value = "搜索失败。";
+  } finally {
+    loading.value = false;
+  }
+}
 
 async function handleSearch() {
   if (!canSearch.value) {
     errorMessage.value = "请先填写 API Key 和搜索关键词。";
     return;
   }
+  await doSearch(1);
+}
 
-  loading.value = true;
-  errorMessage.value = "";
-  statusMessage.value = "正在搜索资源...";
-  detail.value = null;
-  selected.value = null;
-  downloadUrl.value = "";
-
-  try {
-    items.value = await searchTorrents(settings, filters);
-    statusMessage.value = `搜索完成，共拿到 ${items.value.length} 条结果。`;
-  } catch (error) {
-    items.value = [];
-    errorMessage.value = error instanceof Error ? error.message : String(error);
-    statusMessage.value = "搜索失败。";
-  } finally {
-    loading.value = false;
-  }
+async function goToPage(page) {
+  if (page < 1 || page > totalPages.value || page === currentPage.value) return;
+  await doSearch(page);
 }
 
 async function inspectTorrent(item) {
@@ -233,6 +250,12 @@ async function createDownloadUrl(item) {
               <a :href="detailUrl(settings.siteBase, item.id)" target="_blank" rel="noreferrer">打开页面</a>
             </div>
           </article>
+
+          <div v-if="totalCount > 0" class="pagination">
+            <button :disabled="!hasPrev || loading" @click="goToPage(currentPage - 1)">‹ 上一页</button>
+            <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+            <button :disabled="!hasNext || loading" @click="goToPage(currentPage + 1)">下一页 ›</button>
+          </div>
         </div>
 
         <div class="detail-panel">

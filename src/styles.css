@@ -320,3 +320,38 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 14px;
+}
+
+.pagination button {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 20px;
+  background: var(--panel-strong);
+  color: var(--accent-strong);
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.pagination button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 14px;
+  color: var(--muted);
+  min-width: 80px;
+  text-align: center;
+}

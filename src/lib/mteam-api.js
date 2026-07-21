@@ -93,9 +93,9 @@ async function postForm(url, formData, apiKey) {
  * 与 Python 版 search() 对齐：
  *   - 成人分类(429)使用 adult 模式 payload
  *   - 普通模式加 pageNumber / pageSize / sortField / sortOrder
- *   - 返回数据直接取 data.data（与 Python 一致）
+ *   - 返回 { items, total } 供前端翻页
  */
-export async function searchTorrents(settings, filters) {
+export async function searchTorrents(settings, filters, pageNumber = 1) {
   const apiBase = resolveApiBase(settings.apiBase);
 
   // 排序字段映射：前端 → API
@@ -116,11 +116,12 @@ export async function searchTorrents(settings, filters) {
       mode: "adult",
       keyword: filters.keyword,
       categories: [],
-      pageNumber: 1,
+      pageNumber: pageNumber,
       pageSize: limit,
     };
     const data = await postJson(`${apiBase}/torrent/search`, payload, settings.apiKey);
     const items = data?.data?.data || [];
+    const total = data?.data?.total || items.length;
     // 前端排序（adult 模式 API 不支持排序参数）
     items.sort((a, b) => {
       const key = filters.sortField;
@@ -128,14 +129,14 @@ export async function searchTorrents(settings, filters) {
       const bv = key === "seeders" ? Number(b?.status?.seeders || b?.seeders || 0) : Number(b?.[key] || 0);
       return filters.sortDirection === "asc" ? av - bv : bv - av;
     });
-    return items.slice(0, limit);
+    return { items: items.slice(0, limit), total };
   }
 
   // 普通模式
   const payload = {
     keyword: filters.keyword,
     visible: 1,
-    pageNumber: 1,
+    pageNumber: pageNumber,
     pageSize: limit,
     sortField: sortField,
     sortOrder: sortOrder,
@@ -150,6 +151,7 @@ export async function searchTorrents(settings, filters) {
 
   // 与 Python 版一致：response.json().get('data', {}).get('data', [])
   const items = data?.data?.data || [];
+  const total = data?.data?.total || items.length;
 
   // 前端兜底排序（API 不支持时仍有效）
   items.sort((a, b) => {
@@ -159,7 +161,7 @@ export async function searchTorrents(settings, filters) {
     return filters.sortDirection === "asc" ? av - bv : bv - av;
   });
 
-  return items.slice(0, limit);
+  return { items: items.slice(0, limit), total };
 }
 
 /**
